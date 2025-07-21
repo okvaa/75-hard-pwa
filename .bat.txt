@@ -1,0 +1,18 @@
+@echo off
+echo 🔄 Cleaning node_modules and package-lock.json...
+
+IF EXIST node_modules (
+  rmdir /s /q node_modules
+)
+
+IF EXIST package-lock.json (
+  del /f /q package-lock.json
+)
+
+echo 📦 Installing dependencies (legacy peer deps)...
+call npm install --legacy-peer-deps
+
+echo 🚀 Starting development server...
+call npm run dev
+
+pause
