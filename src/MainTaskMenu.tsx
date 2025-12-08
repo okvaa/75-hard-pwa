@@ -1,48 +1,51 @@
 import { useState, useEffect } from "react";
 import { Button } from "./components/ui/button";
-import Week2Tracker from "./Week2Tracker";
-import Week3Tracker from "./Week3Tracker";
+import ExerciseTracker from "./ExerciseTracker";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import { Dumbbell, BookOpen, Camera, Salad, CalendarDays } from "lucide-react";
+import { BookOpen, CalendarDays } from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import Calendar from "react-calendar";
-import 'react-calendar/dist/Calendar.css';
+import "react-calendar/dist/Calendar.css";
 
-const tasks = [
-  "Exercise",
-  "Exercise – Week 3",
-  "Follow a diet",
-  "Drink a gallon of water",
-  "Read 10 pages",
-  "Take a progress photo",
-  "View streaks",
+import MealPlanTracker from "./MealPlanTracker";
+import PhotoPage from "./PhotoPage";
+import ProgressDashboard from "./ProgressDashboard";
+
+const TASKS = [
+  { label: "Exercise" },
+  { label: "Follow a diet" },
+  { label: "Drink a gallon of water" },
+  { label: "Read 10 pages" },
+  { label: "Take a progress photo" },
+  { label: "View streaks" },
+  { label: "Progress Dashboard" },
 ];
 
 export default function MainTaskMenu() {
   const [selectedTask, setSelectedTask] = useState<string | null>(() => {
-    const stored = localStorage.getItem("selectedTask");
-    return stored ? stored : null;
+    return localStorage.getItem("selectedTask") || null;
   });
 
   const [waterIntake, setWaterIntake] = useState(() => {
-    const stored = localStorage.getItem("waterIntake");
-    return stored ? parseInt(stored) : 0;
+    return parseInt(localStorage.getItem("waterIntake") || "0");
   });
+
   const [pagesRead, setPagesRead] = useState(() => {
-    const stored = localStorage.getItem("pagesRead");
-    return stored ? parseInt(stored) : 0;
+    return parseInt(localStorage.getItem("pagesRead") || "0");
   });
+
   const [darkMode, setDarkMode] = useState(() => {
-    const stored = localStorage.getItem("darkMode");
-    return stored ? stored === "true" : false;
+    return localStorage.getItem("darkMode") === "true";
   });
+
   const [completedDates, setCompletedDates] = useState<Date[]>(() => {
     const stored = localStorage.getItem("completedDates");
     return stored ? JSON.parse(stored).map((d: string) => new Date(d)) : [];
   });
 
+  // Persist state
   useEffect(() => {
     localStorage.setItem("selectedTask", selectedTask ?? "");
   }, [selectedTask]);
@@ -63,12 +66,18 @@ export default function MainTaskMenu() {
     localStorage.setItem("completedDates", JSON.stringify(completedDates));
   }, [completedDates]);
 
-  const handleSelect = (task: string) => {
-    setSelectedTask(task);
-    localStorage.setItem("selectedTask", task);
+  // Helpers
+  const markTodayComplete = () => {
+    const today = new Date();
+    const isMarked = completedDates.some(
+      (d) => d.toDateString() === today.toDateString()
+    );
+    if (!isMarked) {
+      setCompletedDates([...completedDates, today]);
+    }
   };
 
-  const handleWaterIncrease = () => {
+  const handleWater = () => {
     const next = Math.min(waterIntake + 17, 129);
     setWaterIntake(next);
     if (next === 129) {
@@ -77,7 +86,7 @@ export default function MainTaskMenu() {
     }
   };
 
-  const handlePagesIncrease = () => {
+  const handleRead = () => {
     const next = pagesRead + 1;
     setPagesRead(next);
     if (next >= 10) {
@@ -86,25 +95,11 @@ export default function MainTaskMenu() {
     }
   };
 
-  const markTodayComplete = () => {
-    const today = new Date();
-    const alreadyMarked = completedDates.some(
-      (date) => date.toDateString() === today.toDateString()
-    );
-    if (!alreadyMarked) {
-      setCompletedDates([...completedDates, today]);
-    }
-  };
-
   const resetProgress = () => {
     setWaterIntake(0);
     setPagesRead(0);
-    localStorage.removeItem("waterIntake");
-    localStorage.removeItem("pagesRead");
-    localStorage.removeItem("selectedTask");
-    localStorage.removeItem("exerciseProgress");
-    localStorage.removeItem("completedDates");
     setCompletedDates([]);
+    localStorage.clear();
   };
 
   const fadeIn = {
@@ -114,14 +109,19 @@ export default function MainTaskMenu() {
 
   return (
     <motion.div
-      className={`p-4 space-y-4 max-w-sm mx-auto min-h-screen transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}
+      className={`p-4 space-y-4 max-w-sm mx-auto min-h-screen transition-colors duration-300 ${
+        darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
+      }`}
       initial="initial"
       animate="animate"
       variants={fadeIn}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.4 }}
     >
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-center mb-4 flex-1">75 Hard Tracker</h2>
+        <h2 className="text-2xl font-bold text-center flex-1">
+          75 Hard Tracker
+        </h2>
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="text-xs border px-2 py-1 rounded"
@@ -130,37 +130,47 @@ export default function MainTaskMenu() {
         </button>
       </div>
 
+      {/* Task buttons */}
       <div className="grid gap-2">
-        {tasks.map((task) => (
+        {TASKS.map((t) => (
           <Button
-            key={task}
-            variant={selectedTask === task ? "default" : "outline"}
-            onClick={() => handleSelect(task)}
+            key={t.label}
+            variant={selectedTask === t.label ? "default" : "outline"}
+            onClick={() => setSelectedTask(t.label)}
             className="w-full"
           >
-            {task}
+            {t.label}
           </Button>
         ))}
       </div>
 
+      {/* Reset */}
       <div className="text-center mt-4">
         <Button variant="destructive" onClick={resetProgress} className="w-full">
           Clear All Data
         </Button>
       </div>
 
+      {/* Views */}
       {selectedTask === "Exercise" && (
         <motion.div className="mt-6" variants={fadeIn}>
-          <Week2Tracker persist={true} />
+          <ExerciseTracker />
         </motion.div>
       )}
-      {selectedTask === "Exercise – Week 3" && <Week3Tracker />}
 
+      {selectedTask === "Follow a diet" && (
+        <motion.div className="mt-6" variants={fadeIn}>
+          <MealPlanTracker />
+        </motion.div>
+      )}
 
       {selectedTask === "Drink a gallon of water" && (
-        <motion.div className="mt-6 space-y-4 flex flex-col items-center bg-blue-50 dark:bg-blue-900 rounded-xl p-4 shadow-md" variants={fadeIn}>
-          <h3 className="text-xl font-bold">Water tracker 💧</h3>
-          <p className="text-sm">You must drink</p>
+        <motion.div
+          className="mt-6 space-y-4 flex flex-col items-center bg-blue-50 dark:bg-blue-900 rounded-xl p-4 shadow-md"
+          variants={fadeIn}
+        >
+          <h3 className="text-xl font-bold">Water Tracker 💧</h3>
+          <p className="text-sm">Goal</p>
           <p className="text-3xl font-bold">129oz</p>
 
           <div className="w-40 h-40 relative">
@@ -171,73 +181,65 @@ export default function MainTaskMenu() {
                 textColor: darkMode ? "#fff" : "#1e3a8a",
                 pathColor: "#0077cc",
                 trailColor: "#d1e9ff",
-                textSize: "24px",
               })}
             />
-            <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-sm mt-2">
-              <div className="font-semibold">{waterIntake}</div>
-              <div className="text-gray-500">/ 129</div>
-              <div className="text-xs text-gray-400 mt-1">First steps ;)</div>
-            </div>
           </div>
 
-          <button
-            className="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold w-full"
-            onClick={() => {
-              setWaterIntake(129);
-              confetti();
-              markTodayComplete();
-            }}
-          >
-            Drink all ✅
-          </button>
+          <Button onClick={() => setWaterIntake(129)} className="w-full">
+            Drink All
+          </Button>
 
-          <button
-            className="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold w-full"
-            onClick={handleWaterIncrease}
-          >
+          <Button onClick={handleWater} className="w-full">
             Drink 17oz
-          </button>
+          </Button>
         </motion.div>
       )}
 
       {selectedTask === "Read 10 pages" && (
-        <motion.div className="mt-6 space-y-3 text-center bg-purple-50 dark:bg-purple-900 shadow-md rounded-xl p-4" variants={fadeIn}>
+        <motion.div
+          className="mt-6 space-y-3 text-center bg-purple-50 dark:bg-purple-900 shadow-md rounded-xl p-4"
+          variants={fadeIn}
+        >
           <BookOpen className="mx-auto text-purple-500 w-8 h-8 animate-bounce" />
           <p className="text-lg font-semibold">Pages read: {pagesRead}</p>
-          <Button onClick={handlePagesIncrease} className="w-full">Add 1 Page</Button>
+          <Button onClick={handleRead} className="w-full">
+            Add 1 Page
+          </Button>
         </motion.div>
       )}
 
       {selectedTask === "Take a progress photo" && (
-        <motion.div className="mt-6 space-y-3 text-center bg-yellow-50 dark:bg-yellow-900 shadow-md rounded-xl p-4" variants={fadeIn}>
-          <Camera className="mx-auto text-yellow-500 w-8 h-8 animate-pulse" />
-          <p className="text-base font-medium">Tap to upload today's photo:</p>
-          <input type="file" accept="image/*" className="text-sm mx-auto block" />
-        </motion.div>
-      )}
-
-      {selectedTask === "Follow a diet" && (
-        <motion.div className="mt-6 text-center bg-green-50 dark:bg-green-900 shadow-md rounded-xl p-4" variants={fadeIn}>
-          <Salad className="mx-auto text-green-600 w-8 h-8 animate-spin-slow" />
-          <p className="text-base font-medium">Stay consistent and no cheat meals!</p>
+        <motion.div
+          className="mt-6 bg-yellow-50 dark:bg-yellow-900 shadow-md rounded-xl p-4"
+          variants={fadeIn}
+        >
+          <PhotoPage />
         </motion.div>
       )}
 
       {selectedTask === "View streaks" && (
-        <motion.div className="mt-6 space-y-3 text-center bg-gray-50 dark:bg-gray-800 shadow-md rounded-xl p-4" variants={fadeIn}>
+        <motion.div
+          className="mt-6 space-y-3 text-center bg-gray-50 dark:bg-gray-800 shadow-md rounded-xl p-4"
+          variants={fadeIn}
+        >
           <CalendarDays className="mx-auto text-indigo-600 w-8 h-8" />
           <h3 className="text-xl font-semibold">Daily Completion Calendar</h3>
+
           <Calendar
-            value={new Date()}
             tileClassName={({ date }) =>
               completedDates.some(
                 (d) => d.toDateString() === date.toDateString()
               )
-                ? "bg-indigo-400 text-white rounded-full"
+                ? "bg-indigo-500 text-white rounded-full"
                 : ""
             }
           />
+        </motion.div>
+      )}
+
+      {selectedTask === "Progress Dashboard" && (
+        <motion.div className="mt-6" variants={fadeIn}>
+          <ProgressDashboard />
         </motion.div>
       )}
     </motion.div>
