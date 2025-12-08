@@ -4,63 +4,61 @@ import { Checkbox } from "./components/ui/checkbox";
 import { ScrollArea } from "./components/ui/scroll-area";
 
 type SetEntry = { weight: string; reps: string };
-type ExerciseState = { completed?: boolean; machine?: string; sets: SetEntry[] };
+type ExerciseState = { completed?: boolean; sets: SetEntry[] };
 
-const START_DAY = 131;
+const START_DAY = 138;
 
-const originalPlan = [
-  { 
-    label: "📅 Week of Nov 17th–23rd"
-   },
+const rawPlan = [
+  { label: "📅 Week of Nov 24th to 30th", gym: [], outdoor: "" },
 
   {
-    label: "Monday – Chest Power",
+    label: "Monday – Chest",
     gym: [
       { name: "Incline Bench Press", sets: 4 },
-      { name: "Flat Bench Press", sets: 4 },
+      { name: "Flat Dumbbell Press", sets: 4 },
+      { name: "Cable Crossovers", sets: 3 },
       { name: "Machine Chest Press", sets: 3 },
-      { name: "Cable Fly", sets: 3 },
       { name: "Push-ups (AMRAP)", sets: 1 },
     ],
-    outdoor: "Push-up walk",
+    outdoor: "Push-ups + brisk walk",
   },
 
   {
-    label: "Tuesday – Back Power",
+    label: "Tuesday – Back",
     gym: [
-      { name: "Deadlift (or Rack Pull)", sets: 4 },
-      { name: "Chest-Supported Row", sets: 4 },
-      { name: "Lat Pulldown (Wide)", sets: 3 },
-      { name: "Barbell Curl", sets: 3 },
+      { name: "Rack Pull / Deadlift", sets: 4 },
+      { name: "Wide Grip Pull-ups", sets: 4 },
+      { name: "T-Bar Row", sets: 4 },
+      { name: "Single Arm Lat Pulldown", sets: 3 },
       { name: "Face Pulls", sets: 3 },
     ],
-    outdoor: "Pull-ups + walk",
+    outdoor: "Ruck walk or pull-ups",
   },
 
   {
-    label: "Wednesday – Legs Strength",
+    label: "Wednesday – Legs (Heavy)",
     gym: [
-      { name: "Back Squat", sets: 5 },
+      { name: "Pause Back Squat", sets: 5 },
+      { name: "Hack Squat / Leg Press", sets: 4 },
       { name: "Romanian Deadlift", sets: 4 },
-      { name: "Leg Press", sets: 4 },
       { name: "Reverse Lunges", sets: 3 },
       { name: "Standing Calf Raise", sets: 4 },
     ],
-    outdoor: "Stair climb + hill walk",
+    outdoor: "Hill sprints / stairs",
   },
 
   {
-    label: "Thursday – Arms + Shoulders",
+    label: "Thursday – Shoulders + Arms",
     gym: [
       { name: "Standing Overhead Press", sets: 4 },
       { name: "Dumbbell Lateral Raise", sets: 4 },
       { name: "Rear Delt Fly", sets: 3 },
       { name: "EZ Bar Curl", sets: 4 },
-      { name: "Rope Triceps Pushdown", sets: 4 },
+      { name: "Cable Triceps Pushdown", sets: 4 },
       { name: "Incline Dumbbell Curl", sets: 3 },
       { name: "Overhead Rope Extension", sets: 3 },
     ],
-    outdoor: "Band pump + walk",
+    outdoor: "Bands + short walk",
   },
 
   {
@@ -68,20 +66,21 @@ const originalPlan = [
     gym: [
       { name: "Front Squat", sets: 4 },
       { name: "Leg Extension", sets: 4 },
-      { name: "Nordic / Ham Curl Variation", sets: 4 },
-      { name: "Hip Thrust", sets: 3 },
+      { name: "Nordic Curl / Ham Variation", sets: 4 },
+      { name: "Hip Thrust / Glute Bridge", sets: 3 },
       { name: "Seated Calf Raise", sets: 4 },
     ],
-    outdoor: "Weighted steps + walk",
+    outdoor: "Weighted step-ups",
   },
 
   {
-    label: "Saturday – Conditioning",
+    label: "Saturday – Conditioning + Arms",
     gym: [
       { name: "Sled Push Rounds", sets: 8 },
-      { name: "Kettlebell Swings", sets: 3 },
       { name: "Battle Ropes", sets: 3 },
-      { name: "Plank", sets: 3 },
+      { name: "Kettlebell Clean & Press", sets: 3 },
+      { name: "Preacher Curls", sets: 3 },
+      { name: "Triceps Dips", sets: 3 },
     ],
     outdoor: "Intervals outside",
   },
@@ -89,176 +88,186 @@ const originalPlan = [
   {
     label: "Sunday – TRX & Recovery",
     gym: [
-      { name: "TRX Row", sets: 4, repRange: "10–12" },
-      { name: "TRX Chest Press", sets: 4, repRange: "10–12" },
+      { name: "TRX Row", sets: 4, repRange: "10-12" },
+      { name: "TRX Chest Press", sets: 4, repRange: "10-12" },
       { name: "TRX Split Squat", sets: 3, repRange: "12/leg" },
-      { name: "TRX Biceps Curl", sets: 3, repRange: "12–15" },
-      { name: "TRX Triceps Extension", sets: 3, repRange: "12–15" },
-      { name: "TRX Hamstring Curl", sets: 3, repRange: "10–12" },
-      { name: "TRX Pike", sets: 3, repRange: "8–10" },
+      { name: "TRX Biceps Curl", sets: 3, repRange: "12-15" },
+      { name: "TRX Triceps Extension", sets: 3, repRange: "12-15" },
+      { name: "TRX Hamstring Curl", sets: 3, repRange: "10-12" },
+      { name: "TRX Pike", sets: 3, repRange: "8-10" },
       { name: "Stretch Flow (10 min)", sets: 1 },
     ],
-    outdoor: "Bike ride or walk",
+    outdoor: "Walk or bike",
   },
 ];
 
-// helper: day index -> rep target (Option B wave)
-function repTargetForIndex(index: number) {
-  // originalPlan has header at index 0. index: 1..7 map to Mon..Sun
-  // 1-3 => Strength (5-8), 4 => Moderate (8-12), 5-6 => Volume (12-15), 7 => TRX (10-12)
-  if (index >= 1 && index <= 3) return "5–8 reps";
-  if (index === 4) return "8–12 reps";
-  if (index === 5 || index === 6) return "12–15 reps";
-  if (index === 7) return "10–12 reps";
-  return "8–12 reps";
-}
-
-const week20Plan = originalPlan.map((entry, idx) => {
-  if (idx === 0) return entry;
-  const dayNumber = START_DAY + (idx - 1);
-  return {
-    ...entry,
-    day: `(${dayNumber}) ${entry.label}`,
-    repTarget: repTargetForIndex(idx),
-  };
+const week21Plan = rawPlan.map((entry, index) => {
+  if (index === 0) return entry;
+  const dayNum = START_DAY + (index - 1);
+  return { ...entry, day: `(${dayNum}) ${entry.label}` };
 });
 
-export default function Week20Tracker() {
-  const [completedState, setCompletedState] = useState<Record<string, ExerciseState>>({});
+export default function Week21Tracker() {
+  const [completedState, setCompletedState] = useState<
+    Record<string, ExerciseState>
+  >({});
 
   useEffect(() => {
-    const stored = localStorage.getItem("week20Progress");
+    const stored = localStorage.getItem("week21Progress");
     if (stored) {
       setCompletedState(JSON.parse(stored));
       return;
     }
 
-    // initialize defaults
     const defaults: Record<string, ExerciseState> = {};
-    for (let i = 0; i < week20Plan.length; i++) {
-      const block: any = week20Plan[i];
-      if (!block.gym) continue;
-
-      block.gym.forEach((ex: any) => {
+    for (const block of week21Plan) {
+      block.gym?.forEach((ex: any) => {
         const setCount = ex.sets ?? 3;
-        const sets: SetEntry[] = Array.from({ length: setCount }).map(() => ({ weight: "", reps: "" }));
-        defaults[`${block.day}::${ex.name}`] = { completed: false, machine: "", sets };
+        const sets = Array.from({ length: setCount }).map(() => ({
+          weight: "",
+          reps: "",
+        }));
+        defaults[`${block.day}::${ex.name}`] = { completed: false, sets };
       });
 
-      if (block.outdoor) defaults[`${block.day}::outdoor`] = { completed: false, machine: "", sets: [] };
+      if (block.outdoor)
+        defaults[`${block.day}::outdoor`] = { completed: false, sets: [] };
     }
+
     setCompletedState(defaults);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("week20Progress", JSON.stringify(completedState));
+    localStorage.setItem("week21Progress", JSON.stringify(completedState));
   }, [completedState]);
 
   const toggleExercise = (key: string) => {
-    setCompletedState(prev => ({ ...prev, [key]: { ...prev[key], completed: !prev[key]?.completed } }));
+    setCompletedState((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], completed: !prev[key]?.completed },
+    }));
   };
 
-  const updateMachine = (key: string, value: string) => {
-    setCompletedState(prev => ({ ...prev, [key]: { ...prev[key], machine: value } }));
-  };
-
-  const updateSet = (key: string, idx: number, field: "weight" | "reps", value: string) => {
-    setCompletedState(prev => {
+  const updateSet = (
+    key: string,
+    idx: number,
+    field: "weight" | "reps",
+    value: string
+  ) => {
+    setCompletedState((prev) => {
       const item = prev[key];
       if (!item) return prev;
-      const newSets = item.sets.map((s, i) => (i === idx ? { ...s, [field]: value } : s));
+
+      const newSets = item.sets.map((s, i) =>
+        i === idx ? { ...s, [field]: value } : s
+      );
+
       return { ...prev, [key]: { ...item, sets: newSets } };
     });
   };
 
   const addSet = (key: string) => {
-    setCompletedState(prev => {
-      const item = prev[key];
-      if (!item) return prev;
-      return { ...prev, [key]: { ...item, sets: [...item.sets, { weight: "", reps: "" }] } };
-    });
+    setCompletedState((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        sets: [...prev[key].sets, { weight: "", reps: "" }],
+      },
+    }));
   };
 
-  const removeSet = (key: string, idx: number) => {
-    setCompletedState(prev => {
-      const item = prev[key];
-      if (!item) return prev;
-      return { ...prev, [key]: { ...item, sets: item.sets.filter((_, i) => i !== idx) } };
-    });
-  };
+  const removeSet = (key: string, idx: number) =>
+    setCompletedState((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        sets: prev[key].sets.filter((_, i) => i !== idx),
+      },
+    }));
 
   return (
     <ScrollArea className="p-4 max-w-md mx-auto space-y-4">
-      {week20Plan.map(({ day, gym, outdoor, repTarget }: any) => (
-        <Card key={day} className="rounded-2xl shadow-md">
+      {week21Plan.map(({ day, gym, outdoor }) => (
+        <Card key={day}>
           <CardContent className="p-4">
             {!gym.length ? (
               <h2 className="text-xl font-bold text-center">{day}</h2>
             ) : (
               <>
-                <h2 className="text-xl font-bold mb-2">{day}</h2>
-                <div className="text-sm text-gray-500 mb-3">Day target: {repTarget}</div>
+                <h2 className="text-xl font-bold mb-3">{day}</h2>
 
                 <h3 className="font-semibold mb-1">Gym:</h3>
                 <div className="space-y-4">
                   {gym.map((ex: any) => {
                     const key = `${day}::${ex.name}`;
-                    const state = completedState[key] ?? { sets: Array.from({ length: ex.sets ?? 3 }).map(() => ({ weight: "", reps: "" })), completed: false, machine: "" };
+                    const state = completedState[key];
 
                     return (
                       <div key={key} className="border rounded p-2">
-                        <div className="flex items-start justify-between mb-2">
+                        <div className="flex justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <Checkbox checked={!!state.completed} onCheckedChange={() => toggleExercise(key)} />
+                            <Checkbox
+                              checked={!!state?.completed}
+                              onCheckedChange={() => toggleExercise(key)}
+                            />
                             <div>
                               <div className="font-medium">{ex.name}</div>
-                              {ex.repRange ? (
-                                <div className="text-xs text-gray-500">Target: {ex.repRange}</div>
-                              ) : (
-                                <div className="text-xs text-gray-500">Target: {repTarget}</div>
+                              {ex.repRange && (
+                                <div className="text-xs text-gray-500">
+                                  Target: {ex.repRange}
+                                </div>
                               )}
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <button className="text-xs px-2 py-1 border rounded" onClick={() => addSet(key)}>Add set</button>
-                          </div>
+                          <button
+                            className="text-xs px-2 py-1 border rounded"
+                            onClick={() => addSet(key)}
+                          >
+                            Add set
+                          </button>
                         </div>
 
-                        {/* Machine used (per exercise) */}
-                        <div className="mb-2 text-sm">
-                          <label className="block text-xs text-gray-600">Machine Used:</label>
-                          <input
-                            type="text"
-                            value={state.machine || ""}
-                            placeholder="e.g. Hammer Strength / Cable #3"
-                            className="w-full border rounded px-2 py-1 text-sm"
-                            onChange={(e) => updateMachine(key, e.target.value)}
-                          />
-                        </div>
-
-                        {/* Sets table */}
                         <table className="w-full text-sm">
                           <thead>
                             <tr>
-                              <th className="pb-1 text-left">Set</th>
-                              <th className="pb-1 text-left">Weight</th>
-                              <th className="pb-1 text-left">Reps</th>
-                              <th className="pb-1"></th>
+                              <th>Set</th>
+                              <th>Weight</th>
+                              <th>Reps</th>
+                              <th></th>
                             </tr>
                           </thead>
                           <tbody>
-                            {state.sets.map((s: SetEntry, i: number) => (
-                              <tr key={i} className="align-top">
-                                <td className="py-1">{i + 1}</td>
-                                <td className="py-1">
-                                  <input type="number" className="w-full border rounded px-2 py-1 text-sm" value={s.weight} onChange={(e) => updateSet(key, i, "weight", e.target.value)} />
+                            {state?.sets?.map((s, i) => (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td>
+                                  <input
+                                    className="w-full border rounded p-1"
+                                    type="number"
+                                    value={s.weight}
+                                    onChange={(e) =>
+                                      updateSet(key, i, "weight", e.target.value)
+                                    }
+                                  />
                                 </td>
-                                <td className="py-1">
-                                  <input type="number" className="w-full border rounded px-2 py-1 text-sm" value={s.reps} onChange={(e) => updateSet(key, i, "reps", e.target.value)} />
+                                <td>
+                                  <input
+                                    className="w-full border rounded p-1"
+                                    type="number"
+                                    value={s.reps}
+                                    onChange={(e) =>
+                                      updateSet(key, i, "reps", e.target.value)
+                                    }
+                                  />
                                 </td>
-                                <td className="py-1">
-                                  <button className="text-xs px-2 py-1 border rounded" onClick={() => removeSet(key, i)}>Remove</button>
+                                <td>
+                                  <button
+                                    className="text-xs border px-2 py-1 rounded"
+                                    onClick={() => removeSet(key, i)}
+                                  >
+                                    Remove
+                                  </button>
                                 </td>
                               </tr>
                             ))}
@@ -270,8 +279,15 @@ export default function Week20Tracker() {
                 </div>
 
                 <h3 className="font-semibold mt-4 mb-1">Outdoor:</h3>
-                <div className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={!!completedState[`${day}::outdoor`]?.completed} onCheckedChange={() => toggleExercise(`${day}::outdoor`)} />
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={
+                      !!completedState[`${day}::outdoor`]?.completed
+                    }
+                    onCheckedChange={() =>
+                      toggleExercise(`${day}::outdoor`)
+                    }
+                  />
                   {outdoor}
                 </div>
               </>

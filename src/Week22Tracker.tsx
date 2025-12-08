@@ -7,8 +7,6 @@ type SetEntry = { weight: string; reps: string; machine: string };
 type ExerciseState = { completed?: boolean; sets: SetEntry[] };
 
 const week22Plan = [
-  { day: "📅 Week of Dec 1st–7th (Week 22)", },
-
   { day: "🔴 (146) Monday – Chest (Spine-Safe)", gym: [
       { name: "Machine Chest Press", sets: 4, reps: "8–12" },
       { name: "Incline Dumbbell Bench (neutral grip)", sets: 4, reps: "8–12" },
