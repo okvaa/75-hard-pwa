@@ -1,218 +1,170 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "./components/ui/card";
+import { Button } from "./components/ui/button";
 import { Checkbox } from "./components/ui/checkbox";
+import { Input } from "./components/ui/input";
 import { ScrollArea } from "./components/ui/scroll-area";
 
-type SetEntry = { weight: string; reps: string; machine: string };
-type ExerciseState = { completed?: boolean; sets: SetEntry[] };
+type SetLog = {
+  weight: string;
+  reps: string;
+};
 
-const week23Plan = [
-  {
-    day: "🔴 (153) Monday – Chest (Back-Safe Week Variation)",
-    gym: [
-      { name: "Seated Chest Press Machine", sets: 4, reps: "8–12" },
-      { name: "Incline Hammer Strength Press", sets: 4, reps: "8–12" },
-      { name: "Cable Fly (mid chest)", sets: 3, reps: "12–15" },
-      { name: "Push-up Machine or Smith Push-ups", sets: 2, reps: "AMRAP" },
+type ExerciseLog = {
+  completed: boolean;
+  sets: SetLog[];
+};
+
+type DayLog = Record<string, ExerciseLog>;
+
+const STORAGE_KEY = "week25-progress";
+
+const week25Plan: Record<string, { title: string; exercises: { name: string; sets: number }[] }> = {
+  Monday: {
+    title: "Lower Body + Machines",
+    exercises: [
+      { name: "Leg Press (Machine)", sets: 4 },
+      { name: "Seated Hamstring Curl (Machine)", sets: 3 },
+      { name: "Walking Lunges", sets: 3 },
+      { name: "Calf Raise (Machine)", sets: 4 },
+      { name: "Cable Crunch (ABS)", sets: 3 },
+      { name: "Hanging Knee Raise (ABS)", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
-  {
-    day: "🔵 (154) Tuesday – Back (NO spinal load)",
-    gym: [
-      { name: "Neutral Grip Pulldown", sets: 4, reps: "8–12" },
-      { name: "Chest-Supported Row Machine", sets: 4, reps: "10–12" },
-      { name: "Straight Arm Cable Pulldown", sets: 3, reps: "12–15" },
-      { name: "Seated Row Narrow Grip", sets: 3, reps: "10–12" },
+  Tuesday: {
+    title: "Upper Push",
+    exercises: [
+      { name: "Incline DB Press", sets: 4 },
+      { name: "Machine Chest Press", sets: 3 },
+      { name: "Seated Shoulder Press (Machine)", sets: 3 },
+      { name: "Cable Triceps Pushdown", sets: 3 },
+      { name: "Ab Wheel Rollout (ABS)", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
-  {
-    day: "🟣 (155) Wednesday – Legs (Back-Friendly, No Axial Load)",
-    gym: [
-      { name: "Leg Press (moderate)", sets: 4, reps: "10–15" },
-      { name: "Seated Leg Curl", sets: 3, reps: "12–15" },
-      { name: "Leg Extension", sets: 3, reps: "12–15" },
-      { name: "Glute Drive Machine", sets: 3, reps: "10–12" },
-      { name: "Standing Calf Raise Machine", sets: 4, reps: "15–20" },
+  Wednesday: {
+    title: "Norwegian 4x4",
+    exercises: [
+      { name: "Norwegian 4x4 Intervals (Run / Bike / Row)", sets: 4 },
+      { name: "Plank Hold (ABS – seconds)", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
-  {
-    day: "🟠 (156) Thursday – Shoulders + Arms (Machine Emphasis)",
-    gym: [
-      { name: "Seated Machine Shoulder Press", sets: 4, reps: "8–12" },
-      { name: "Cable Y-Raise", sets: 3, reps: "12–15" },
-      { name: "Machine Rear Delt Fly", sets: 3, reps: "12–15" },
-      { name: "Preacher Curl Machine", sets: 3, reps: "10–12" },
-      { name: "Cable Rope Pressdown", sets: 3, reps: "10–12" },
-      { name: "Hammer Curl Machine or Dumbbells", sets: 3, reps: "10–12" },
+  Thursday: {
+    title: "Upper Pull",
+    exercises: [
+      { name: "Lat Pulldown (Machine)", sets: 4 },
+      { name: "Chest Supported Row (Machine)", sets: 3 },
+      { name: "Face Pulls", sets: 3 },
+      { name: "EZ Bar Curl", sets: 3 },
+      { name: "Cable Woodchoppers (ABS)", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
-  {
-    day: "🟡 (157) Friday – Chest/Back Pump (Spine Neutral)",
-    gym: [
-      { name: "Pec Deck Machine", sets: 3, reps: "12–15" },
-      { name: "Lat Pulldown (close grip)", sets: 3, reps: "10–12" },
-      { name: "Cable Low Row", sets: 3, reps: "10–12" },
-      { name: "Cable High-to-Low Fly", sets: 3, reps: "12–15" },
+  Friday: {
+    title: "Full Body / Accessories",
+    exercises: [
+      { name: "Hack Squat (Machine)", sets: 4 },
+      { name: "Incline Machine Press", sets: 3 },
+      { name: "Seated Row (Machine)", sets: 3 },
+      { name: "Lateral Raise", sets: 3 },
+      { name: "Cable Crunch (ABS)", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
+};
 
-  {
-    day: "🟢 (158) Saturday – Conditioning (Back-Safe Week 2)",
-    gym: [
-      { name: "Elliptical Sprints", sets: 6, reps: "30 sec on / 30 sec off" },
-      { name: "Sled Push (very light)", sets: 6, reps: "20–40 ft" },
-      { name: "Core: Cable Pallof Press", sets: 3, reps: "12–15" },
-      { name: "Core: Dead Bug (machine-free)", sets: 3, reps: "10–12" },
-    ],
-    outdoor: "1-hour walk",
-  },
-
-  {
-    day: "⚪ (159) Sunday – TRX Mobility + Stretching",
-    gym: [
-      { name: "TRX Row", sets: 4, reps: "10–15" },
-      { name: "TRX Chest Press", sets: 4, reps: "10–12" },
-      { name: "TRX Lunge (shallow)", sets: 3, reps: "8–10/leg" },
-      { name: "TRX Biceps Curl", sets: 3, reps: "12–15" },
-      { name: "TRX Triceps Extension", sets: 3, reps: "12–15" },
-      { name: "Mobility Flow", sets: 1, reps: "10 min" },
-    ],
-    outdoor: "1-hour walk",
-  },
-];
-
-export default function Week23Tracker() {
-  const [state, setState] = useState<Record<string, ExerciseState>>({});
+export default function Week25Tracker({ onBack }: { onBack: () => void }) {
+  const [log, setLog] = useState<Record<string, DayLog>>({});
 
   useEffect(() => {
-    const stored = localStorage.getItem("week23Progress");
-    if (stored) return setState(JSON.parse(stored));
-
-    const defaults: Record<string, ExerciseState> = {};
-    week23Plan.forEach((blk) => {
-      blk.gym.forEach((ex: any) => {
-        defaults[`${blk.day}::${ex.name}`] = {
-          completed: false,
-          sets: Array.from({ length: ex.sets }).map(() => ({
-            weight: "",
-            reps: "",
-            machine: "",
-          })),
-        };
-      });
-      defaults[`${blk.day}::outdoor`] = { completed: false, sets: [] };
-    });
-    setState(defaults);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) setLog(JSON.parse(stored));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("week23Progress", JSON.stringify(state));
-  }, [state]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+  }, [log]);
 
-  const toggle = (key: string) =>
-    setState((prev) => ({
+  const toggleExercise = (day: string, ex: string) => {
+    setLog((prev) => ({
       ...prev,
-      [key]: { ...prev[key], completed: !prev[key].completed },
-    }));
-
-  const update = (key: string, index: number, field: keyof SetEntry, value: string) =>
-    setState((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        sets: prev[key].sets.map((s, i) =>
-          i === index ? { ...s, [field]: value } : s
-        ),
+      [day]: {
+        ...prev[day],
+        [ex]: {
+          ...prev[day]?.[ex],
+          completed: !prev[day]?.[ex]?.completed,
+        },
       },
     }));
+  };
+
+  const updateSet = (
+    day: string,
+    ex: string,
+    index: number,
+    field: "weight" | "reps",
+    value: string
+  ) => {
+    setLog((prev) => {
+      const sets = prev[day]?.[ex]?.sets || [];
+      sets[index] = { ...sets[index], [field]: value };
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          [ex]: {
+            completed: prev[day]?.[ex]?.completed || false,
+            sets,
+          },
+        },
+      };
+    });
+  };
 
   return (
     <ScrollArea className="p-4 max-w-md mx-auto space-y-4">
-      {week23Plan.map(({ day, gym, outdoor }) => (
+      <Button variant="outline" onClick={onBack}>
+        ← Back to Menu
+      </Button>
+
+      <h1 className="text-2xl font-bold text-center">
+        Week 25 – Dec 15–21
+      </h1>
+
+      {Object.entries(week25Plan).map(([day, { title, exercises }]) => (
         <Card key={day} className="rounded-2xl shadow-md">
-          <CardContent className="p-4">
-            <h2 className="text-xl font-bold mb-2">{day}</h2>
+          <CardContent className="p-4 space-y-3">
+            <h2 className="text-lg font-bold">
+              {day} – {title}
+            </h2>
 
-            <h3 className="font-semibold mb-1">Gym:</h3>
-            <div className="space-y-4">
-              {gym.map((ex: any) => {
-                const key = `${day}::${ex.name}`;
-                const item = state[key];
-                if (!item) return null;
+            {exercises.map(({ name, sets }) => (
+              <div key={name} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={!!log[day]?.[name]?.completed}
+                    onCheckedChange={() => toggleExercise(day, name)}
+                  />
+                  <span className="font-medium">{name}</span>
+                </div>
 
-                return (
-                  <div key={key} className="border rounded p-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={item.completed} onCheckedChange={() => toggle(key)} />
-                        <div className="font-medium">{ex.name}</div>
-                      </div>
-                      <div className="text-xs text-gray-500">{ex.reps}</div>
-                    </div>
-
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left">
-                          <th>Set</th>
-                          <th>Weight</th>
-                          <th>Reps</th>
-                          <th>Machine</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.sets.map((s, i) => (
-                          <tr key={i}>
-                            <td>{i + 1}</td>
-                            <td>
-                              <input
-                                type="number"
-                                className="border w-full px-1"
-                                value={s.weight}
-                                onChange={(e) => update(key, i, "weight", e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                className="border w-full px-1"
-                                value={s.reps}
-                                onChange={(e) => update(key, i, "reps", e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                className="border w-full px-1"
-                                value={s.machine}
-                                onChange={(e) => update(key, i, "machine", e.target.value)}
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {Array.from({ length: sets }).map((_, i) => (
+                  <div key={i} className="flex gap-2 pl-6">
+                    <Input
+                      placeholder="Weight"
+                      value={log[day]?.[name]?.sets?.[i]?.weight || ""}
+                      onChange={(e) =>
+                        updateSet(day, name, i, "weight", e.target.value)
+                      }
+                    />
+                    <Input
+                      placeholder="Reps / Sec"
+                      value={log[day]?.[name]?.sets?.[i]?.reps || ""}
+                      onChange={(e) =>
+                        updateSet(day, name, i, "reps", e.target.value)
+                      }
+                    />
                   </div>
-                );
-              })}
-            </div>
-
-            <h3 className="font-semibold mt-4 mb-1">Outdoor:</h3>
-            <div className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={state[`${day}::outdoor`]?.completed}
-                onCheckedChange={() => toggle(`${day}::outdoor`)}
-              />
-              {outdoor}
-            </div>
+                ))}
+              </div>
+            ))}
           </CardContent>
         </Card>
       ))}

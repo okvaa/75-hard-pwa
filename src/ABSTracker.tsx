@@ -1,94 +1,61 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "./components/ui/card";
 import { Checkbox } from "./components/ui/checkbox";
 import { ScrollArea } from "./components/ui/scroll-area";
 
-const trxPlan = [
+const absPlan = [
   {
-    day: "🏋️ Bulletproof Core Session",
-    gym: [
-      "Butt Walks – 2x20",
-      "Cable Crunches – 3x20",
-      "Reverse Sit-ups – 3xFailure",
-      "Back Supported Knee Tucks – 4xFailure",
-      "QL Side Bends – 3x20 reps each side",
-      "Lying Engaged (EO,IO,TrA) Twisting Crunches – 3x20 each side",
-      "Modified Cable Rotations – 3x15 each side",
+    day: "🔥 Core Stability",
+    exercises: [
+      "Cable Crunch – 3x20",
+      "Ab Wheel – 3x10",
+      "Plank Hold – 3x60s",
     ],
-    outdoor: "15–30 min walk or jog to warm up/cool down",
   },
   {
-    day: "🔥 TRX Core Focus",
-    gym: [
-      "TRX Plank – 3x1 min",
-      "TRX Knee Tuck – 3x15",
-      "TRX Mountain Climber – 3x20",
-      "TRX Side Plank Hold – 3x30 sec/side",
-      "TRX Body Saw – 3x12",
+    day: "💪 Obliques & Rotation",
+    exercises: [
+      "Woodchoppers – 3x15/side",
+      "Side Plank – 3x30s/side",
+      "Russian Twist – 3x20",
     ],
-    outdoor: "Stretch or light mobility outdoors",
-  },
-  {
-    day: "💪 TRX Strength Builder",
-    gym: [
-      "TRX Squat Jump – 3x10",
-      "TRX Single-Leg Squat – 3x8/leg",
-      "TRX Row – 3x12",
-      "TRX Push-Up – 3x12",
-      "TRX Hamstring Curl – 3x10",
-    ],
-    outdoor: "Quick walk or short ruck session",
   },
 ];
 
-export default function TRXTracker() {
-  const [completed, setCompleted] = useState({});
+export default function ABSTracker() {
+  const [done, setDone] = useState<any>({});
 
   useEffect(() => {
-    const stored = localStorage.getItem("trxProgress");
-    if (stored) setCompleted(JSON.parse(stored));
+    const stored = localStorage.getItem("absProgress");
+    if (stored) setDone(JSON.parse(stored));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("trxProgress", JSON.stringify(completed));
-  }, [completed]);
+    localStorage.setItem("absProgress", JSON.stringify(done));
+  }, [done]);
 
-  const toggleExercise = (day, exercise) => {
-    setCompleted((prev) => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [exercise]: !prev[day]?.[exercise],
-      },
+  const toggle = (day: string, ex: string) => {
+    setDone((p: any) => ({
+      ...p,
+      [day]: { ...p[day], [ex]: !p[day]?.[ex] },
     }));
   };
 
   return (
     <ScrollArea className="p-4 max-w-md mx-auto space-y-4">
-      {trxPlan.map(({ day, gym, outdoor }) => (
-        <Card key={day} className="rounded-2xl shadow-md">
+      {absPlan.map(({ day, exercises }) => (
+        <Card key={day}>
           <CardContent className="p-4">
-            <h2 className="text-xl font-bold mb-2">{day}</h2>
-            <h3 className="font-semibold mb-1">Exercises:</h3>
-            <ul className="space-y-1">
-              {gym.map((exercise) => (
-                <li key={exercise} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={!!completed[day]?.[exercise]}
-                    onCheckedChange={() => toggleExercise(day, exercise)}
-                  />
-                  {exercise}
-                </li>
-              ))}
-            </ul>
-            <h3 className="font-semibold mt-4 mb-1">Outdoor:</h3>
-            <div className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={!!completed[day]?.outdoor}
-                onCheckedChange={() => toggleExercise(day, "outdoor")}
-              />
-              {outdoor}
-            </div>
+            <h2 className="font-bold">{day}</h2>
+            {exercises.map((e) => (
+              <div key={e} className="flex gap-2 text-sm">
+                <Checkbox
+                  checked={!!done[day]?.[e]}
+                  onCheckedChange={() => toggle(day, e)}
+                />
+                {e}
+              </div>
+            ))}
           </CardContent>
         </Card>
       ))}
