@@ -1,32 +1,13 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "./components/ui/card";
-import { Button } from "./components/ui/button";
-import {
-  getHard75Day,
-  setHard75Day,
-} from "./dayCounter";
+const START_DATE = new Date("2025-07-08T00:00:00");
 
-export default function DayCounterView() {
-  const [day, setDay] = useState<number>(getHard75Day());
+export function getHard75Day(): number {
+  const today = new Date();
 
-  useEffect(() => {
-    setHard75Day(day);
-  }, [day]);
+  // normalize to midnight
+  today.setHours(0, 0, 0, 0);
 
-  return (
-    <Card className="rounded-2xl shadow-md">
-      <CardContent className="p-4 text-center space-y-4">
-        <h2 className="text-xl font-bold">📆 75 Hard Day</h2>
+  const diffMs = today.getTime() - START_DATE.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        <div className="text-5xl font-bold">{day}</div>
-
-        <div className="flex justify-center gap-4">
-          <Button onClick={() => setDay((d) => Math.max(1, d - 1))}>
-            −
-          </Button>
-          <Button onClick={() => setDay((d) => d + 1)}>+</Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return diffDays + 1; // July 8 = Day 1
 }

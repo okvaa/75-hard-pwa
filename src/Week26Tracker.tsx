@@ -1,221 +1,277 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "./components/ui/card";
-import { Checkbox } from "./components/ui/checkbox";
+import { Input } from "./components/ui/input";
+import { Button } from "./components/ui/button";
 import { ScrollArea } from "./components/ui/scroll-area";
 
-type SetEntry = { weight: string; reps: string; machine: string };
-type ExerciseState = { completed?: boolean; sets: SetEntry[] };
+/* ================= TYPES ================= */
 
-const week23Plan = [
+type SetLog = {
+  weight?: string;
+  reps?: string;
+  pain?: string;
+};
+
+type ExerciseLog = {
+  machine?: string;
+  status?: "completed" | "skipped";
+  sets: SetLog[];
+};
+
+type DayLog = Record<string, ExerciseLog>;
+
+/* ================= WEEK 26 PLAN ================= */
+
+const week26 = [
   {
-    day: "🔴 (153) Monday – Chest (Back-Safe Week Variation)",
-    gym: [
-      { name: "Seated Chest Press Machine", sets: 4, reps: "8–12" },
-      { name: "Incline Hammer Strength Press", sets: 4, reps: "8–12" },
-      { name: "Cable Fly (mid chest)", sets: 3, reps: "12–15" },
-      { name: "Push-up Machine or Smith Push-ups", sets: 2, reps: "AMRAP" },
+    date: "Mon • Dec 22",
+    label: "PUSH",
+    exercises: [
+      { name: "Machine Chest Press", reps: "6–10", sets: 4 },
+      { name: "Incline DB Press", reps: "8–10", sets: 4 },
+      { name: "Seated Shoulder Press", reps: "8–10", sets: 3 },
+      { name: "Cable Fly", reps: "12–15", sets: 3 },
+      { name: "Rope Triceps Pushdown", reps: "10–15", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
   {
-    day: "🔵 (154) Tuesday – Back (NO spinal load)",
-    gym: [
-      { name: "Neutral Grip Pulldown", sets: 4, reps: "8–12" },
-      { name: "Chest-Supported Row Machine", sets: 4, reps: "10–12" },
-      { name: "Straight Arm Cable Pulldown", sets: 3, reps: "12–15" },
-      { name: "Seated Row Narrow Grip", sets: 3, reps: "10–12" },
+    date: "Tue • Dec 23",
+    label: "PULL",
+    exercises: [
+      { name: "Neutral Lat Pulldown", reps: "8–12", sets: 4 },
+      { name: "Chest-Supported Row", reps: "8–10", sets: 4 },
+      { name: "Single-Arm Machine Row", reps: "10–12", sets: 3 },
+      { name: "Face Pull", reps: "12–15", sets: 3 },
+      { name: "Preacher Curl", reps: "10–12", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
   {
-    day: "🟣 (155) Wednesday – Legs (Back-Friendly, No Axial Load)",
-    gym: [
-      { name: "Leg Press (moderate)", sets: 4, reps: "10–15" },
-      { name: "Seated Leg Curl", sets: 3, reps: "12–15" },
-      { name: "Leg Extension", sets: 3, reps: "12–15" },
-      { name: "Glute Drive Machine", sets: 3, reps: "10–12" },
-      { name: "Standing Calf Raise Machine", sets: 4, reps: "15–20" },
+    date: "Wed • Dec 24",
+    label: "LEGS",
+    exercises: [
+      { name: "Hack Squat", reps: "8–10", sets: 4 },
+      { name: "Seated Leg Curl", reps: "10–15", sets: 3 },
+      { name: "Belt Squat", reps: "10–12", sets: 3 },
+      { name: "Leg Extension", reps: "12–15", sets: 3 },
+      { name: "Seated Calf Raise", reps: "12–20", sets: 4 },
     ],
-    outdoor: "1-hour walk",
   },
-
   {
-    day: "🟠 (156) Thursday – Shoulders + Arms (Machine Emphasis)",
-    gym: [
-      { name: "Seated Machine Shoulder Press", sets: 4, reps: "8–12" },
-      { name: "Cable Y-Raise", sets: 3, reps: "12–15" },
-      { name: "Machine Rear Delt Fly", sets: 3, reps: "12–15" },
-      { name: "Preacher Curl Machine", sets: 3, reps: "10–12" },
-      { name: "Cable Rope Pressdown", sets: 3, reps: "10–12" },
-      { name: "Hammer Curl Machine or Dumbbells", sets: 3, reps: "10–12" },
+    date: "Thu • Dec 25",
+    label: "UPPER",
+    exercises: [
+      { name: "Incline Smith Press", reps: "8–10", sets: 4 },
+      { name: "Assisted Pull-Up", reps: "8–12", sets: 4 },
+      { name: "Machine Lateral Raise", reps: "12–15", sets: 4 },
+      { name: "Cable Curl", reps: "12–15", sets: 3 },
+      { name: "Overhead Triceps Extension", reps: "12–15", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
   {
-    day: "🟡 (157) Friday – Chest/Back Pump (Spine Neutral)",
-    gym: [
-      { name: "Pec Deck Machine", sets: 3, reps: "12–15" },
-      { name: "Lat Pulldown (close grip)", sets: 3, reps: "10–12" },
-      { name: "Cable Low Row", sets: 3, reps: "10–12" },
-      { name: "Cable High-to-Low Fly", sets: 3, reps: "12–15" },
+    date: "Fri • Dec 26",
+    label: "FULL BODY",
+    exercises: [
+      { name: "Leg Press", reps: "10–12", sets: 4 },
+      { name: "Machine Chest Press", reps: "10–12", sets: 3 },
+      { name: "Seated Row", reps: "10–12", sets: 3 },
+      { name: "Reverse Pec Deck", reps: "12–15", sets: 3 },
+      { name: "Farmer Carry", reps: "30–45 sec", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
   {
-    day: "🟢 (158) Saturday – Conditioning (Back-Safe Week 2)",
-    gym: [
-      { name: "Elliptical Sprints", sets: 6, reps: "30 sec on / 30 sec off" },
-      { name: "Sled Push (very light)", sets: 6, reps: "20–40 ft" },
-      { name: "Core: Cable Pallof Press", sets: 3, reps: "12–15" },
-      { name: "Core: Dead Bug (machine-free)", sets: 3, reps: "10–12" },
+    date: "Sat • Dec 27",
+    label: "CONDITIONING",
+    exercises: [
+      { name: "Incline Walk", reps: "30–45 min", sets: 1 },
+      { name: "Pallof Press", reps: "12–15", sets: 3 },
+      { name: "Dead Bug", reps: "10 / side", sets: 3 },
+      { name: "Side Plank", reps: "30–45 sec", sets: 3 },
     ],
-    outdoor: "1-hour walk",
   },
-
   {
-    day: "⚪ (159) Sunday – TRX Mobility + Stretching",
-    gym: [
-      { name: "TRX Row", sets: 4, reps: "10–15" },
-      { name: "TRX Chest Press", sets: 4, reps: "10–12" },
-      { name: "TRX Lunge (shallow)", sets: 3, reps: "8–10/leg" },
-      { name: "TRX Biceps Curl", sets: 3, reps: "12–15" },
-      { name: "TRX Triceps Extension", sets: 3, reps: "12–15" },
-      { name: "Mobility Flow", sets: 1, reps: "10 min" },
+    date: "Sun • Dec 28",
+    label: "RECOVERY",
+    exercises: [
+      { name: "Zone 2 Walk", reps: "45 min", sets: 1 },
+      { name: "Mobility Flow", reps: "10 min", sets: 1 },
+      { name: "Breathing / Decompression", reps: "5 min", sets: 1 },
     ],
-    outdoor: "1-hour walk",
   },
 ];
 
-export default function Week23Tracker() {
-  const [state, setState] = useState<Record<string, ExerciseState>>({});
+/* ================= COMPONENT ================= */
 
+export default function Week26Tracker() {
+  const [dayIndex, setDayIndex] = useState(0);
+  const [log, setLog] = useState<Record<string, DayLog>>({});
+
+  /* Load */
   useEffect(() => {
-    const stored = localStorage.getItem("week23Progress");
-    if (stored) return setState(JSON.parse(stored));
-
-    const defaults: Record<string, ExerciseState> = {};
-    week23Plan.forEach((blk) => {
-      blk.gym.forEach((ex: any) => {
-        defaults[`${blk.day}::${ex.name}`] = {
-          completed: false,
-          sets: Array.from({ length: ex.sets }).map(() => ({
-            weight: "",
-            reps: "",
-            machine: "",
-          })),
-        };
-      });
-      defaults[`${blk.day}::outdoor`] = { completed: false, sets: [] };
-    });
-    setState(defaults);
+    const stored = localStorage.getItem("week26Log");
+    if (stored) setLog(JSON.parse(stored));
   }, []);
 
+  /* Save */
   useEffect(() => {
-    localStorage.setItem("week23Progress", JSON.stringify(state));
-  }, [state]);
+    localStorage.setItem("week26Log", JSON.stringify(log));
+  }, [log]);
 
-  const toggle = (key: string) =>
-    setState((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], completed: !prev[key].completed },
-    }));
+  const day = week26[dayIndex];
 
-  const update = (key: string, index: number, field: keyof SetEntry, value: string) =>
-    setState((prev) => ({
+  const updateSet = (
+    ex: string,
+    setIndex: number,
+    field: keyof SetLog,
+    value: string
+  ) => {
+    setLog((prev) => {
+      const existing = prev[day.label]?.[ex];
+
+      const sets =
+        existing?.sets?.length
+          ? [...existing.sets]
+          : Array.from({ length: setIndex + 1 }, () => ({}));
+
+      sets[setIndex] = { ...sets[setIndex], [field]: value };
+
+      return {
+        ...prev,
+        [day.label]: {
+          ...prev[day.label],
+          [ex]: {
+            ...existing,
+            sets,
+          },
+        },
+      };
+    });
+  };
+
+  const setStatus = (ex: string, status: "completed" | "skipped") =>
+    setLog((prev) => ({
       ...prev,
-      [key]: {
-        ...prev[key],
-        sets: prev[key].sets.map((s, i) =>
-          i === index ? { ...s, [field]: value } : s
-        ),
+      [day.label]: {
+        ...prev[day.label],
+        [ex]: {
+          ...prev[day.label]?.[ex],
+          sets: prev[day.label]?.[ex]?.sets || [],
+          status,
+        },
       },
     }));
 
   return (
-    <ScrollArea className="p-4 max-w-md mx-auto space-y-4">
-      {week23Plan.map(({ day, gym, outdoor }) => (
-        <Card key={day} className="rounded-2xl shadow-md">
-          <CardContent className="p-4">
-            <h2 className="text-xl font-bold mb-2">{day}</h2>
+    <ScrollArea className="max-w-md mx-auto p-4 space-y-4">
+      {/* Header */}
+      <div className="text-center font-bold text-lg">
+        Week of Dec 22–28
+      </div>
 
-            <h3 className="font-semibold mb-1">Gym:</h3>
-            <div className="space-y-4">
-              {gym.map((ex: any) => {
-                const key = `${day}::${ex.name}`;
-                const item = state[key];
-                if (!item) return null;
+      {/* Navigation */}
+      <div className="flex justify-between items-center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setDayIndex((i) => Math.max(0, i - 1))}
+          disabled={dayIndex === 0}
+        >
+          ◀
+        </Button>
 
-                return (
-                  <div key={key} className="border rounded p-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={item.completed} onCheckedChange={() => toggle(key)} />
-                        <div className="font-medium">{ex.name}</div>
-                      </div>
-                      <div className="text-xs text-gray-500">{ex.reps}</div>
+        <div className="font-semibold">
+          {day.date} — {day.label}
+        </div>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            setDayIndex((i) => Math.min(week26.length - 1, i + 1))
+          }
+          disabled={dayIndex === week26.length - 1}
+        >
+          ▶
+        </Button>
+      </div>
+
+      {/* Day */}
+      <Card className="rounded-2xl">
+        <CardContent className="p-4 space-y-4">
+          {day.exercises.map((e) => {
+            const entry = log[day.label]?.[e.name];
+
+            return (
+              <div key={e.name} className="border rounded-xl p-3 space-y-2">
+                <div className="font-semibold">{e.name}</div>
+
+                <Input
+                  placeholder="Machine / Equipment"
+                  value={entry?.machine || ""}
+                  onChange={(ev) =>
+                    setLog((p) => ({
+                      ...p,
+                      [day.label]: {
+                        ...p[day.label],
+                        [e.name]: {
+                          ...p[day.label]?.[e.name],
+                          machine: ev.target.value,
+                          sets: entry?.sets || [],
+                        },
+                      },
+                    }))
+                  }
+                />
+
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => setStatus(e.name, "completed")}>
+                    ✅
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setStatus(e.name, "skipped")}
+                  >
+                    ⏭
+                  </Button>
+                </div>
+
+                {entry?.status !== "skipped" &&
+                  [...Array(e.sets)].map((_, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <span className="text-xs w-10">S{i + 1}</span>
+                      <span className="text-xs w-16">{e.reps}</span>
+
+                      <Input
+                        className="w-16 h-8 text-sm"
+                        placeholder="Wt"
+                        value={entry?.sets?.[i]?.weight || ""}
+                        onChange={(ev) =>
+                          updateSet(e.name, i, "weight", ev.target.value)
+                        }
+                      />
+                      <Input
+                        className="w-14 h-8 text-sm"
+                        placeholder="Reps"
+                        value={entry?.sets?.[i]?.reps || ""}
+                        onChange={(ev) =>
+                          updateSet(e.name, i, "reps", ev.target.value)
+                        }
+                      />
+                      <Input
+                        className="w-12 h-8 text-sm"
+                        placeholder="Pain"
+                        value={entry?.sets?.[i]?.pain || ""}
+                        onChange={(ev) =>
+                          updateSet(e.name, i, "pain", ev.target.value)
+                        }
+                      />
                     </div>
-
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left">
-                          <th>Set</th>
-                          <th>Weight</th>
-                          <th>Reps</th>
-                          <th>Machine</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.sets.map((s, i) => (
-                          <tr key={i}>
-                            <td>{i + 1}</td>
-                            <td>
-                              <input
-                                type="number"
-                                className="border w-full px-1"
-                                value={s.weight}
-                                onChange={(e) => update(key, i, "weight", e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                className="border w-full px-1"
-                                value={s.reps}
-                                onChange={(e) => update(key, i, "reps", e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                className="border w-full px-1"
-                                value={s.machine}
-                                onChange={(e) => update(key, i, "machine", e.target.value)}
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })}
-            </div>
-
-            <h3 className="font-semibold mt-4 mb-1">Outdoor:</h3>
-            <div className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={state[`${day}::outdoor`]?.completed}
-                onCheckedChange={() => toggle(`${day}::outdoor`)}
-              />
-              {outdoor}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+                  ))}
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
     </ScrollArea>
   );
 }

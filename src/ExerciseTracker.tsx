@@ -26,6 +26,9 @@ import Week23Tracker from "./Week23Tracker";
 import Week24Tracker from "./Week24Tracker";
 import Week25Tracker from "./Week25Tracker";
 import Week26Tracker from "./Week26Tracker";
+import Week27Tracker from "./Week27Tracker";
+import Week28Tracker from "./Week28Tracker";
+
 
 
 
@@ -80,6 +83,8 @@ export default function ExerciseTracker() {
     "Week 24",
     "Week 25",
     "Week 26",
+    "Week 27",
+    "Week 28",
   ];
 
   return (
@@ -129,6 +134,9 @@ export default function ExerciseTracker() {
       {selectedWeek === "Week 24" && <Week24Tracker />}
       {selectedWeek === "Week 25" && <Week25Tracker />}
       {selectedWeek === "Week 26" && <Week26Tracker />}
+      {selectedWeek === "Week 27" && <Week27Tracker />}
+      {selectedWeek === "Week 28" && <Week28Tracker />}
+      {selectedWeek === "Week 29" && <Week29Tracker />}
     </div>
   );
 }
