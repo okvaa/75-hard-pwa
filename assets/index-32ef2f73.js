@@ -1033,7 +1033,7 @@ Error generating stack: `+i.message+`
     .ex-name { font-family: var(--font-display); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.15; flex: 1; }
     .ex-check { font-size: 15px; color: var(--green); flex-shrink: 0; margin-left: 8px; margin-top: 2px; }
     .ex-meta { font-family: var(--font-display); font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
-    {e.notes && (<div style={{fontSize: 11,color: "var(--text-muted)",marginBottom: 8}}>{e.notes} </div>)}
+    
     .overload-hint { border-radius: 8px; border: 1px solid rgba(96,165,250,0.2); background: var(--blue-dim); padding: 10px 12px; margin-bottom: 10px; }
     .overload-hint.maintain { background: rgba(245,158,11,0.07); border-color: rgba(245,158,11,0.2); }
     .overload-hint.deload { background: rgba(240,68,68,0.08); border-color: rgba(240,68,68,0.2); }
