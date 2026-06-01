@@ -2107,7 +2107,8 @@ Error generating stack: `+i.message+`
       --font-body: 'Barlow', sans-serif;
     }
     * { box-sizing: border-box; }
-    .tracker-root { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); padding-bottom: 60px; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    html, body { overflow-x: hidden; max-width: 100vw; }
+    .tracker-root { width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); padding-bottom: 60px; -webkit-font-smoothing: antialiased; overflow-x: hidden; position: relative; }
     .tracker-header { padding: 28px 20px 20px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #111 0%, var(--bg) 100%); }
     .tracker-header .week-label { font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
     .tracker-header h1 { font-family: var(--font-display); font-size: 36px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
@@ -2130,15 +2131,15 @@ Error generating stack: `+i.message+`
     .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); }
     .chip-dot.complete { background: var(--green); }
     .chip-dot.partial { background: var(--accent); }
-    .section-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 10px; }
-    .day-title { font-family: var(--font-display); font-size: 28px; font-weight: 900; letter-spacing: -0.01em; text-transform: uppercase; }
+    .section-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 20px 10px; gap: 8px; overflow: hidden; }
+    .day-title { font-family: var(--font-display); font-size: 22px; font-weight: 900; letter-spacing: -0.01em; text-transform: uppercase; flex: 1; min-width: 0; }
     .day-badge { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
     .progress-bar-wrap { padding: 0 20px 16px; }
     .progress-bar-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
     .progress-bar-fill.complete { background: var(--green); }
     .progress-label { font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
-    .readiness-card { margin: 0 16px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg2); padding: 16px; }
+    .readiness-card { margin: 0 16px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg2); padding: 16px; overflow: hidden; }
     .card-title { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
     .readiness-inner { display: flex; align-items: center; gap: 16px; }
     .readiness-gauge { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
@@ -2147,7 +2148,7 @@ Error generating stack: `+i.message+`
     .gauge-fill { fill: none; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease; }
     .gauge-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 18px; font-weight: 900; }
     .readiness-details { flex: 1; }
-    .readiness-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: var(--font-body); font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+    .readiness-input { width: 100%; max-width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: var(--font-body); font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; box-sizing: border-box; }
     .readiness-input:focus { border-color: var(--accent); }
     .readiness-input::placeholder { color: var(--text-muted); }
     .mode-badge { margin-top: 8px; font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -2158,8 +2159,8 @@ Error generating stack: `+i.message+`
     .recovery-day-card .rec-icon { font-size: 32px; margin-bottom: 8px; }
     .recovery-day-card h2 { font-family: var(--font-display); font-size: 22px; font-weight: 900; text-transform: uppercase; color: #93c5fd; margin-bottom: 6px; }
     .recovery-day-card p { font-size: 13px; color: var(--text-muted); }
-    .exercises-wrap { padding: 0 16px; }
-    .exercise-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; transition: border-color 0.2s, background 0.2s; overflow: hidden; }
+    .exercises-wrap { padding: 0 16px; width: 100%; box-sizing: border-box; overflow: hidden; }
+    .exercise-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; transition: border-color 0.2s, background 0.2s; overflow: hidden; width: 100%; box-sizing: border-box; }
     .exercise-card.complete { border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.04); }
     .ex-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; }
     .ex-name { font-family: var(--font-display); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.15; flex: 1; }
