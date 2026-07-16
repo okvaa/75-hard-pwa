@@ -3584,7 +3584,7 @@ Error generating stack: `+i.message+`
 
     .day-strip { display: flex; gap: 6px; padding: 14px 16px; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; }
     .day-strip::-webkit-scrollbar { display: none; }
-    .day-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); cursor: pointer; transition: all 0.15s ease; min-width: 56px; user-select: none; -webkit-user-select: none; touch-action: none; }
+    .day-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); cursor: pointer; transition: all 0.15s ease; min-width: 56px; user-select: none; -webkit-user-select: none; touch-action: pan-x; }
     .day-chip:hover { border-color: var(--border-bright); }
     .day-chip.active { background: var(--accent-dim); border-color: var(--accent); }
     .day-chip.dragging { opacity: 0.4; transform: scale(0.95); }
