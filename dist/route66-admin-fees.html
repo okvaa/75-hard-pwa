@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R66 — Add Fee (Admin)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt:#1b1e22; --asphalt-2:#23272d; --cream:#f6f1e4; --sand:#f3ead3;
+    --rust:#c1442d; --turquoise:#2e9c97; --mustard:#e3a857; --line:#3a3f47; --ink:#1b1e22;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--asphalt);color:var(--cream);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;
+  }
+  .wrap{max-width:460px;margin:0 auto;padding:32px 20px 60px;}
+  h1{
+    font-family:'Alfa Slab One',serif;font-weight:400;font-size:20px;
+    margin:0 0 4px;color:var(--mustard);
+  }
+  .sub{color:#8f95a0;font-size:12.5px;margin:0 0 22px;font-family:'IBM Plex Mono',monospace;}
+  .card{background:var(--asphalt-2);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px;}
+  label{display:block;font-size:11.5px;font-weight:600;color:#c7ccd4;margin-bottom:6px;}
+  input,select{
+    width:100%;background:var(--sand);color:var(--ink);border:1px solid #d8cfb2;border-radius:6px;
+    padding:10px 11px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;margin-bottom:12px;
+  }
+  .btn{
+    font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:13.5px;border-radius:6px;
+    border:none;cursor:pointer;padding:11px 16px;width:100%;
+  }
+  .btn-primary{background:var(--rust);color:var(--cream);}
+  .btn-add{background:var(--turquoise);color:#0d201f;margin-top:4px;}
+  .hide{display:none;}
+  .order-row{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;
+  }
+  .order-row .oid{font-family:'IBM Plex Mono',monospace;color:var(--turquoise);}
+  .order-row button{
+    background:none;border:1px solid var(--line);color:var(--cream);border-radius:5px;
+    padding:5px 10px;font-size:12px;cursor:pointer;
+  }
+  .selected-order{
+    background:rgba(46,156,151,0.08);border:1px solid rgba(46,156,151,0.3);border-radius:8px;
+    padding:12px 14px;margin-bottom:16px;font-size:13px;
+  }
+  .selected-order .name{font-weight:600;font-size:14px;}
+  .selected-order .meta{color:#8f95a0;font-size:12px;margin-top:2px;}
+  .fee-list-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line);}
+  .fee-list-row button{background:none;border:none;color:#8f95a0;cursor:pointer;font-size:14px;}
+  .total-line{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-weight:600;padding-top:10px;margin-top:6px;border-top:2px dashed var(--line);}
+  .msg{font-size:12.5px;margin-top:10px;font-family:'IBM Plex Mono',monospace;}
+  .msg.err{color:var(--rust);}
+  .msg.ok{color:var(--turquoise);}
+  .err-text{color:var(--rust);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Add Fee to Order</h1>
+  <p class="sub">Internal tool — not linked from the customer-facing forms.</p>
+
+  <!-- Unlock -->
+  <div class="card" id="unlockCard">
+    <label>PIN</label>
+    <input type="password" id="pinInput" placeholder="Enter PIN" inputmode="numeric">
+    <button class="btn btn-primary" id="unlockBtn">Unlock</button>
+    <div class="msg err" id="unlockMsg"></div>
+  </div>
+
+  <!-- Order picker -->
+  <div class="card hide" id="pickerCard">
+    <label>Recent orders</label>
+    <div id="orderList"></div>
+    <button class="btn btn-add" id="refreshBtn" style="margin-top:12px;">Refresh list</button>
+  </div>
+
+  <!-- Fee form -->
+  <div class="card hide" id="feeCard">
+    <div class="selected-order" id="selectedOrderBox"></div>
+
+    <label>Fee type</label>
+    <select id="feeSelect">
+      <option value="Rush Fee" data-amt="10">Rush Fee — $10.00</option>
+      <option value="Handling Fee" data-amt="5">Handling Fee — $5.00</option>
+      <option value="Convenience Fee" data-amt="3">Convenience Fee — $3.00</option>
+      <option value="Custom" data-amt="0">Custom…</option>
+    </select>
+    <label>Amount</label>
+    <input type="text" id="feeAmount" inputmode="decimal" placeholder="10.00">
+    <button class="btn btn-add" id="addFeeBtn">Add to list</button>
+
+    <div id="feeListWrap" style="margin-top:14px;"></div>
+
+    <button class="btn btn-primary" id="applyFeesBtn" style="margin-top:14px;">Apply Fees</button>
+    <div class="msg" id="applyMsg"></div>
+    <button class="btn" id="backBtn" style="margin-top:8px;background:none;border:1px solid var(--line);color:var(--cream);">← Back to order list</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Same Apps Script Web App URL as your order forms.
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzURWVnr_1UNjWlNslRAKuntgNvsN6yQ0wFYuJHqwtMcCis5G3hLNxDrGZ8j4gzMHpG/exec';
+
+  let pin = '';
+  let orders = [];
+  let selectedOrder = null;
+  let feesToAdd = [];
+
+  const money = n => '$' + Number(n).toFixed(2);
+
+  const unlockCard = document.getElementById('unlockCard');
+  const pickerCard = document.getElementById('pickerCard');
+  const feeCard = document.getElementById('feeCard');
+  const unlockMsg = document.getElementById('unlockMsg');
+
+  document.getElementById('unlockBtn').addEventListener('click', () => {
+    pin = document.getElementById('pinInput').value.trim();
+    if(!pin){ unlockMsg.textContent = 'Enter a PIN.'; return; }
+    loadOrders();
+  });
+
+  function loadOrders(){
+    unlockMsg.textContent = 'Loading…';
+    fetch(SCRIPT_URL + '?action=orders&pin=' + encodeURIComponent(pin))
+      .then(r => r.json())
+      .then(data => {
+        if(!data.success){
+          unlockMsg.textContent = data.error || 'Incorrect PIN.';
+          return;
+        }
+        unlockMsg.textContent = '';
+        orders = data.orders || [];
+        unlockCard.classList.add('hide');
+        pickerCard.classList.remove('hide');
+        renderOrderList();
+      })
+      .catch(() => { unlockMsg.textContent = 'Could not reach the backend.'; });
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadOrders);
+
+  function renderOrderList(){
+    const list = document.getElementById('orderList');
+    if(orders.length === 0){
+      list.innerHTML = '<p class="sub">No orders found.</p>';
+      return;
+    }
+    list.innerHTML = orders.map((o, i) => `
+      <div class="order-row">
+        <div>
+          <div class="oid">${o.orderId}</div>
+          <div style="color:#8f95a0;">${o.customerName || ''} · ${money(o.total)} · ${o.orderType || ''}</div>
+        </div>
+        <button type="button" data-i="${i}">Select</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('button[data-i]').forEach(btn => {
+      btn.addEventListener('click', () => selectOrder(orders[+btn.dataset.i]));
+    });
+  }
+
+  function selectOrder(order){
+    selectedOrder = order;
+    feesToAdd = [];
+    pickerCard.classList.add('hide');
+    feeCard.classList.remove('hide');
+    document.getElementById('selectedOrderBox').innerHTML = `
+      <div class="name">${order.customerName || '(no name)'}</div>
+      <div class="meta">${order.orderId} · Current total: ${money(order.total)}</div>
+    `;
+    document.getElementById('applyMsg').textContent = '';
+    renderFeeList();
+  }
+
+  document.getElementById('backBtn').addEventListener('click', () => {
+    feeCard.classList.add('hide');
+    pickerCard.classList.remove('hide');
+  });
+
+  const feeSelect = document.getElementById('feeSelect');
+  const feeAmountInput = document.getElementById('feeAmount');
+  function syncFeeAmount(){
+    const opt = feeSelect.options[feeSelect.selectedIndex];
+    const amt = opt.dataset.amt;
+    feeAmountInput.value = (amt && amt !== '0') ? amt : '';
+  }
+  feeSelect.addEventListener('change', syncFeeAmount);
+  syncFeeAmount();
+
+  document.getElementById('addFeeBtn').addEventListener('click', () => {
+    const opt = feeSelect.options[feeSelect.selectedIndex];
+    const name = opt.value === 'Custom' ? (prompt('Fee name?') || 'Custom Fee') : opt.value;
+    const amt = parseFloat(feeAmountInput.value);
+    if(isNaN(amt) || amt <= 0){ feeAmountInput.focus(); return; }
+    feesToAdd.push({ name, amount: amt });
+    feeAmountInput.value = '';
+    renderFeeList();
+  });
+
+  function renderFeeList(){
+    const wrap = document.getElementById('feeListWrap');
+    if(feesToAdd.length === 0){
+      wrap.innerHTML = '<p class="sub" style="margin:0;">No fees added yet.</p>';
+      return;
+    }
+    const feesTotal = feesToAdd.reduce((s, f) => s + f.amount, 0);
+    const newTotal = Number(selectedOrder.total) + feesTotal;
+    wrap.innerHTML = feesToAdd.map((f, i) => `
+      <div class="fee-list-row">
+        <span>${f.name}</span>
+        <span>${money(f.amount)} <button type="button" data-i="${i}">✕</button></span>
+      </div>
+    `).join('') + `
+      <div class="total-line"><span>New Total</span><span>${money(newTotal)}</span></div>
+    `;
+    wrap.querySelectorAll('button[data-i]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        feesToAdd.splice(+btn.dataset.i, 1);
+        renderFeeList();
+      });
+    });
+  }
+
+  document.getElementById('applyFeesBtn').addEventListener('click', () => {
+    const applyMsg = document.getElementById('applyMsg');
+    if(feesToAdd.length === 0){
+      applyMsg.className = 'msg err';
+      applyMsg.textContent = 'Add at least one fee first.';
+      return;
+    }
+    applyMsg.className = 'msg';
+    applyMsg.textContent = 'Applying…';
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'addFee', pin, orderId: selectedOrder.orderId, fees: feesToAdd })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if(data.success){
+          applyMsg.className = 'msg ok';
+          applyMsg.textContent = 'Applied. New total: ' + money(data.newTotal);
+          feesToAdd = [];
+          selectedOrder.total = data.newTotal;
+          renderFeeList();
+        } else {
+          applyMsg.className = 'msg err';
+          applyMsg.textContent = data.error || 'Something went wrong.';
+        }
+      })
+      .catch(() => {
+        applyMsg.className = 'msg err';
+        applyMsg.textContent = 'Could not reach the backend.';
+      });
+  });
+})();
+</script>
+</body>
+</html>
