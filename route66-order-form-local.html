@@ -195,23 +195,48 @@
   .kit-group:first-child .kit-group-title{margin-top:0;}
 
   /* ---- Collapsible category sections ---- */
-  .cat-group{
-    border:1px solid var(--line);border-radius:8px;
+  .cat-card{
+    border:1px solid var(--line);border-radius:9px;
     margin-bottom:12px;overflow:hidden;background:var(--asphalt-3);
+    border-left:3px solid var(--cat-color, var(--turquoise));
+    transition:box-shadow .2s ease, border-color .2s ease;
   }
-  .cat-group-title{
-    cursor:pointer;list-style:none;
+  .cat-card.open{
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+  }
+  .cat-header{
+    cursor:pointer;user-select:none;
+    display:flex;align-items:center;gap:10px;
+    padding:13px 14px;
+    transition:background .15s ease;
+  }
+  .cat-header:hover{background:rgba(255,255,255,0.03);}
+  .cat-dot{
+    width:9px;height:9px;border-radius:50%;flex:0 0 auto;
+    background:var(--cat-color, var(--turquoise));
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--cat-color, var(--turquoise)) 22%, transparent);
+  }
+  .cat-name{
+    flex:1;min-width:0;
     font-family:'Alfa Slab One',serif;font-weight:400;font-size:13.5px;
-    letter-spacing:.03em;color:var(--mustard);
-    padding:12px 14px;display:flex;align-items:center;gap:8px;
-    user-select:none;
+    letter-spacing:.02em;color:var(--cream);
   }
-  .cat-group-title::-webkit-details-marker{display:none;}
-  .cat-group-title::before{
-    content:'▸';font-size:11px;color:var(--turquoise);transition:transform .15s ease;
+  .cat-count{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8f95a0;
+    background:rgba(255,255,255,0.05);padding:3px 9px;border-radius:10px;
+    flex:0 0 auto;
   }
-  .cat-group[open] > .cat-group-title::before{transform:rotate(90deg);}
-  .cat-group-body{padding:2px 14px 12px;}
+  .cat-chevron{
+    flex:0 0 auto;font-size:11px;color:var(--cat-color, var(--turquoise));
+    transition:transform .25s ease;
+  }
+  .cat-card.open .cat-chevron{transform:rotate(90deg);}
+  .cat-body{
+    max-height:0;overflow:hidden;
+    transition:max-height .28s ease, padding .28s ease;
+    padding:0 14px;
+  }
+  .cat-card.open .cat-body{padding:2px 14px 12px;}
 
   /* ---- Summary / shield ---- */
   .summary-card{
@@ -597,6 +622,8 @@
     `).join('');
   }
 
+  const CAT_COLORS = ['#2e9c97', '#e3a857', '#c1442d', '#a78bde', '#5fa06c', '#4a72c4'];
+
   function renderKits(){
     const container = document.getElementById('kitsList');
     const kitItems = CATALOG.filter(p => p.section === 'kit');
@@ -608,15 +635,25 @@
       if(!categories[cat][p.group]) categories[cat][p.group] = [];
       categories[cat][p.group].push(p);
     });
+    const catNames = Object.keys(categories);
 
-    container.innerHTML = Object.keys(categories).map((catName, i) => `
-      <details class="cat-group" ${i === 0 ? 'open' : ''}>
-        <summary class="cat-group-title">${catName}</summary>
-        <div class="cat-group-body">
-          ${Object.keys(categories[catName]).map(groupName => `
+    container.innerHTML = catNames.map((catName, i) => {
+      const groups = categories[catName];
+      const itemCount = Object.values(groups).reduce((s, arr) => s + arr.length, 0);
+      const color = CAT_COLORS[i % CAT_COLORS.length];
+      return `
+      <div class="cat-card" style="--cat-color:${color};" data-cat-idx="${i}">
+        <div class="cat-header">
+          <span class="cat-dot"></span>
+          <span class="cat-name">${catName}</span>
+          <span class="cat-count">${itemCount} item${itemCount === 1 ? '' : 's'}</span>
+          <span class="cat-chevron">▸</span>
+        </div>
+        <div class="cat-body">
+          ${Object.keys(groups).map(groupName => `
             <div class="kit-group">
               <div class="kit-group-title">${groupName}</div>
-              ${categories[catName][groupName].map(p => `
+              ${groups[groupName].map(p => `
                 <div class="catalog-row">
                   <div class="catalog-row-name">
                     <div class="nm">${p.name}</div>
@@ -629,8 +666,29 @@
             </div>
           `).join('')}
         </div>
-      </details>
-    `).join('');
+      </div>
+    `;
+    }).join('');
+
+    container.querySelectorAll('.cat-card').forEach((card, i) => {
+      const header = card.querySelector('.cat-header');
+      const body = card.querySelector('.cat-body');
+      header.addEventListener('click', () => toggleCatCard(card, body));
+      if(i === 0) openCatCard(card, body);
+    });
+  }
+
+  function openCatCard(card, body){
+    card.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+  function closeCatCard(card, body){
+    card.classList.remove('open');
+    body.style.maxHeight = '0px';
+  }
+  function toggleCatCard(card, body){
+    if(card.classList.contains('open')) closeCatCard(card, body);
+    else openCatCard(card, body);
   }
 
   function onQtyChange(e){
