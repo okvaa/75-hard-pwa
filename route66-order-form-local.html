@@ -188,28 +188,6 @@
     background:var(--sand);color:var(--ink);border:1px solid #d8cfb2;
     border-radius:6px;font-size:13px;
   }
-  /* ---- COA link ---- */
-  .coa-link{
-    display:inline-block;margin-top:6px;
-    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;
-    text-transform:uppercase;text-decoration:none;color:var(--turquoise);
-    border:1px solid var(--turquoise);border-radius:5px;padding:3px 8px;
-    transition:background .15s ease;
-  }
-  .coa-link:hover{background:rgba(46,156,151,0.15);}
-
-  /* ---- Research use only notice ---- */
-  .ruo-notice{
-    background:var(--asphalt-2);border:1px solid var(--line);
-    border-left:4px solid var(--rust);border-radius:8px;
-    padding:14px 16px;margin-bottom:22px;
-  }
-  .ruo-notice h3{
-    font-family:'Alfa Slab One',serif;font-weight:400;font-size:14px;
-    letter-spacing:.05em;text-transform:uppercase;color:var(--mustard);margin:0 0 6px;
-  }
-  .ruo-notice p{margin:0;font-size:12.5px;line-height:1.6;color:#c7ccd4;}
-
   .kit-group{margin-bottom:6px;}
   .kit-group-title{
     font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;
@@ -379,11 +357,6 @@
     <div class="notice">Local pickup only — Broken Arrow / Tulsa area.<br>For laboratory research use only. 21+ to order.</div>
   </div>
 
-  <div class="ruo-notice">
-    <h3>Research Use Only</h3>
-    <p>All peptides are sold for laboratory research use only. Products are not for human consumption, veterinary use, or in vivo applications. By purchasing, you confirm that you are a qualified researcher or institution conducting legitimate scientific research.</p>
-  </div>
-
   <div id="formLive" class="form-live">
   <form id="orderForm" novalidate>
     <div class="grid">
@@ -459,8 +432,8 @@
             </div>
             <div class="pay-opt">
               <div class="pay-opt-label">Apple Pay</div>
-              <div class="pay-opt-value">918-809-6641</div>
-              <button type="button" class="pay-copy" data-copy="918-809-6641" title="Copy">⧉</button>
+              <div class="pay-opt-value">working on it</div>
+              <button type="button" class="pay-copy" data-copy="working on it" title="Copy">⧉</button>
             </div>
           </div>
 
@@ -581,13 +554,6 @@
   const money = n => '$' + n.toFixed(2);
   const escAttr = s => String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
   const nmAttrs = p => p.description ? ` title="${escAttr(p.description)}" style="cursor:help;border-bottom:1px dotted #8f95a0;"` : '';
-  const COA_PAGE = 'route66-coa.html';
-  const coaLink = p => {
-    let href = '';
-    if (p.hasCoa && p.sku) href = COA_PAGE + '?sku=' + encodeURIComponent(p.sku);
-    else if (p.coa && /^https?:\/\//i.test(p.coa)) href = p.coa;
-    return href ? `<a class="coa-link" href="${escAttr(href)}" target="_blank" rel="noopener">View COA ↗</a>` : '';
-  };
   const findProduct = id => CATALOG.find(p => p.id === id);
 
   function qtySelectHtml(id, current){
@@ -651,7 +617,7 @@
       <div class="catalog-row">
         <div class="catalog-row-name">
           <div class="nm"${nmAttrs(p)}>${p.name}</div>
-          <div class="mt">${p.strength} — ${p.label}</div>${coaLink(p)}
+          <div class="mt">${p.strength} — ${p.label}</div>
         </div>
         <div class="catalog-row-price">${money(p.price)}</div>
         ${qtySelectHtml(p.id, cart[p.id] || 0)}
@@ -694,7 +660,7 @@
                 <div class="catalog-row">
                   <div class="catalog-row-name">
                     <div class="nm"${nmAttrs(p)}>${p.name}</div>
-                    <div class="mt">${p.strength} — ${p.label}</div>${coaLink(p)}
+                    <div class="mt">${p.strength} — ${p.label}</div>
                   </div>
                   <div class="catalog-row-price">${money(p.price)}</div>
                   ${qtySelectHtml(p.id, cart[p.id] || 0)}
